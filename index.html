@@ -1,0 +1,3893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>九号电动 · 行政楼+研发楼 6S 巡检看板</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+
+  <!-- ==================== CSS样式 ==================== -->
+  <style>
+    :root {
+      --bg: #030817;
+      --bg-deep: #020512;
+      --panel: rgba(6, 17, 49, 0.82);
+      --panel-solid: #071133;
+      --panel-soft: rgba(10, 30, 72, 0.58);
+      --line: rgba(62, 122, 255, 0.32);
+      --line-strong: rgba(75, 145, 255, 0.72);
+      --line-soft: rgba(62, 122, 255, 0.16);
+      --text: #f5f8ff;
+      --text-soft: #b8c8ec;
+      --muted: #7187b8;
+      --cyan: #35d6ff;
+      --blue: #2f9cf4;
+      --violet: #7357ff;
+      --green: #36c661;
+      --yellow: #ffc53d;
+      --red: #ff4d4f;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-width: 1180px;
+      min-height: 700px;
+      overflow: auto;
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", "HarmonyOS Sans SC",
+        "Noto Sans CJK SC", Arial, sans-serif;
+      background:
+        linear-gradient(rgba(51, 103, 220, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(51, 103, 220, 0.035) 1px, transparent 1px),
+        radial-gradient(circle at 50% 44%, rgba(28, 76, 185, 0.2), transparent 39%),
+        radial-gradient(circle at 12% 30%, rgba(82, 49, 198, 0.1), transparent 27%),
+        linear-gradient(150deg, #050c23 0%, var(--bg) 48%, var(--bg-deep) 100%);
+      background-size: 42px 42px, 42px 42px, auto, auto, auto;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      background:
+        linear-gradient(90deg, rgba(53, 214, 255, 0.018), transparent 22%, transparent 78%, rgba(115, 87, 255, 0.018)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 18%, transparent 85%, rgba(53, 214, 255, 0.012));
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .dashboard {
+      position: relative;
+      display: grid;
+      grid-template-rows: clamp(78px, 8.8vh, 92px) minmax(0, 1fr)
+        clamp(220px, 27vh, 270px) 34px;
+      gap: clamp(7px, 0.55vw, 10px);
+      width: 100%;
+      height: 100%;
+      min-width: 1180px;
+      min-height: 700px;
+      padding: clamp(7px, 0.65vw, 11px) clamp(8px, 0.75vw, 13px)
+        clamp(6px, 0.45vw, 9px);
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 58px minmax(420px, 1fr) auto;
+      gap: clamp(9px, 0.8vw, 15px);
+      align-items: center;
+      min-width: 0;
+      padding: 7px 14px 7px 11px;
+      overflow: visible;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, rgba(10, 29, 76, 0.91), rgba(4, 10, 34, 0.9) 42%, rgba(10, 25, 67, 0.82)),
+        linear-gradient(180deg, rgba(53, 214, 255, 0.05), transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar::before,
+    .topbar::after {
+      position: absolute;
+      content: "";
+      pointer-events: none;
+    }
+
+    .topbar::before {
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent, rgba(53, 214, 255, 0.08), transparent) 0 0 / 38% 1px no-repeat,
+        linear-gradient(90deg, transparent, rgba(115, 87, 255, 0.08), transparent) 100% 100% / 38% 1px no-repeat;
+    }
+
+    .topbar::after {
+      top: 0;
+      left: 50%;
+      width: 390px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      box-shadow: 0 0 14px rgba(53, 214, 255, 0.7);
+      transform: translateX(-50%);
+    }
+
+    .brand-mark {
+      position: relative;
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      color: #ffffff;
+      font-family: "Bahnschrift", "Arial Narrow", sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      border: 1px solid rgba(53, 214, 255, 0.64);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(53, 214, 255, 0.18), transparent 62%),
+        rgba(6, 18, 52, 0.86);
+      box-shadow: 0 0 26px rgba(53, 214, 255, 0.18);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      position: absolute;
+      content: "";
+      border-radius: 50%;
+      border: 1px solid rgba(110, 137, 255, 0.24);
+    }
+
+    .brand-mark::before {
+      inset: -5px;
+      border-right-color: rgba(53, 214, 255, 0.72);
+    }
+
+    .brand-mark::after {
+      inset: 7px;
+      border-left-color: rgba(115, 87, 255, 0.7);
+    }
+
+    .title-block {
+      min-width: 0;
+      text-align: center;
+      padding: 0 4px;
+    }
+
+    .title-kicker {
+      margin-bottom: 2px;
+      color: var(--cyan);
+      font-family: "Bahnschrift", "Arial Narrow", sans-serif;
+      font-size: clamp(9px, 0.55vw, 11px);
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      overflow: hidden;
+      color: #ffffff;
+      font-size: clamp(22px, 1.62vw, 31px);
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: 0.035em;
+      text-overflow: ellipsis;
+      text-shadow: 0 0 20px rgba(47, 125, 255, 0.32);
+      white-space: nowrap;
+    }
+
+    .subtitle {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 17px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 3px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: clamp(9px, 0.55vw, 11px);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .subtitle span {
+      position: relative;
+      padding-left: 10px;
+    }
+
+    .subtitle span::before {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      content: "";
+      background: var(--blue);
+      box-shadow: 0 0 7px rgba(47, 125, 255, 0.8);
+      transform: translateY(-50%);
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .clock {
+      min-width: 156px;
+      padding-right: 12px;
+      text-align: right;
+      border-right: 1px solid var(--line);
+    }
+
+    .clock-date {
+      margin-bottom: 2px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .clock-time {
+      color: #eef6ff;
+      font-family: "Bahnschrift", "DIN Alternate", "Microsoft YaHei", sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-shadow: 0 0 14px rgba(53, 214, 255, 0.24);
+    }
+
+    .period-control {
+      width: 164px;
+    }
+
+    .control-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+    }
+
+    .field {
+      width: 100%;
+      height: 31px;
+      padding: 0 9px;
+      color: var(--text-soft);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      outline: none;
+      background: rgba(3, 12, 35, 0.88);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .field:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 2px rgba(53, 214, 255, 0.1);
+    }
+
+    select.field {
+      appearance: none;
+      padding-right: 28px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-repeat: no-repeat;
+      background-position:
+        calc(100% - 15px) 12px,
+        calc(100% - 10px) 12px;
+      background-size: 5px 5px, 5px 5px;
+    }
+
+    .field option {
+      color: #e8f2ff;
+      background: #071133;
+    }
+
+    .custom-range {
+      position: absolute;
+      top: 63px;
+      right: 16px;
+      z-index: 20;
+      display: none;
+      grid-template-columns: 125px 10px 125px;
+      gap: 5px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid var(--line-strong);
+      border-radius: 5px;
+      background: rgba(4, 13, 39, 0.98);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
+    }
+
+    .custom-range.active {
+      display: grid;
+    }
+
+    .custom-range span {
+      color: var(--muted);
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .custom-range input {
+      height: 28px;
+      padding: 0 6px;
+      font-size: 10px;
+    }
+
+    .operations {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.92fr) minmax(520px, 2.12fr)
+        minmax(340px, 1.02fr);
+      gap: clamp(7px, 0.55vw, 10px);
+      min-height: 0;
+      overflow: visible;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: clamp(7px, 0.55vw, 10px);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .left-stack {
+      grid-template-rows: minmax(154px, 0.52fr) minmax(250px, 1.48fr);
+    }
+
+    .center-stack {
+      grid-template-rows: minmax(178px, 0.86fr) minmax(220px, 1.14fr);
+    }
+
+    .right-stack {
+      grid-template-rows: minmax(180px, 0.96fr) minmax(0, 1.04fr);
+    }
+
+    .panel {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(11, 29, 77, 0.82), rgba(4, 12, 39, 0.88)),
+        linear-gradient(180deg, rgba(53, 214, 255, 0.025), transparent 42%);
+      box-shadow: var(--shadow);
+    }
+
+    .panel::before,
+    .panel::after {
+      position: absolute;
+      z-index: 3;
+      width: 20px;
+      height: 20px;
+      pointer-events: none;
+      content: "";
+    }
+
+    .panel::before {
+      top: -1px;
+      left: -1px;
+      border-top: 2px solid var(--cyan);
+      border-left: 2px solid var(--cyan);
+      border-radius: var(--radius) 0 0;
+    }
+
+    .panel::after {
+      right: -1px;
+      bottom: -1px;
+      border-right: 2px solid rgba(115, 87, 255, 0.85);
+      border-bottom: 2px solid rgba(115, 87, 255, 0.85);
+      border-radius: 0 0 var(--radius);
+    }
+
+    .panel-header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 36px;
+      padding: 8px 13px 5px;
+    }
+
+    .panel-heading {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      min-width: 0;
+    }
+
+    .panel-title {
+      margin: 0;
+      color: #eef5ff;
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .panel-en {
+      overflow: hidden;
+      color: rgba(113, 135, 184, 0.82);
+      font-family: "Bahnschrift", "Arial Narrow", sans-serif;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .panel-meta {
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .chart {
+      width: calc(100% - 16px);
+      height: calc(100% - 44px);
+      min-height: 0;
+      margin: 0 8px 8px;
+    }
+
+    .kpi-panel {
+      padding: 32px 12px 11px;
+      background:
+        linear-gradient(145deg, rgba(11, 30, 78, 0.8), rgba(4, 12, 37, 0.92)),
+        radial-gradient(circle at 50% 0%, rgba(53, 214, 255, 0.08), transparent 52%);
+    }
+
+    .kpi-panel-label {
+      position: absolute;
+      top: 9px;
+      left: 12px;
+      color: var(--cyan);
+      font-family: "Bahnschrift", "Arial Narrow", sans-serif;
+      font-size: 8px;
+      letter-spacing: 0.19em;
+      text-transform: uppercase;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      height: 100%;
+    }
+
+    .kpi-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      padding: 10px 11px 8px 13px;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: 4px;
+      background: rgba(4, 14, 43, 0.64);
+    }
+
+    .kpi-card::before {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 2px;
+      content: "";
+      background: var(--kpi-color, var(--blue));
+      box-shadow: 0 0 12px var(--kpi-color, var(--blue));
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    .kpi-value-row {
+      display: flex;
+      gap: 4px;
+      align-items: baseline;
+      margin-top: 3px;
+    }
+
+    .kpi-value {
+      color: #ffffff;
+      font-family: "Bahnschrift", "DIN Alternate", "Microsoft YaHei", sans-serif;
+      font-size: clamp(21px, 1.48vw, 28px);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow: 0 0 14px var(--kpi-glow, rgba(47, 125, 255, 0.28));
+    }
+
+    .kpi-value.alert {
+      color: #ff7779;
+      text-shadow: 0 0 14px rgba(255, 77, 79, 0.42);
+    }
+
+    .kpi-unit {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .kpi-note {
+      margin-top: 3px;
+      overflow: hidden;
+      color: #6077a8;
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hero-panel {
+      background:
+        radial-gradient(circle at 50% 52%, rgba(33, 87, 217, 0.18), transparent 43%),
+        linear-gradient(180deg, rgba(8, 23, 65, 0.74), rgba(3, 10, 33, 0.94));
+    }
+
+    .hero-heading {
+      position: absolute;
+      top: clamp(9px, 1.15vh, 13px);
+      left: 50%;
+      z-index: 4;
+      width: 82%;
+      padding: 0 8px;
+      text-align: center;
+      transform: translateX(-50%);
+    }
+
+    .hero-title {
+      color: #f7faff;
+      font-size: clamp(17px, 1.12vw, 22px);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 18px rgba(47, 125, 255, 0.45);
+    }
+
+    .hero-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-family: "Bahnschrift", "Arial Narrow", sans-serif;
+      font-size: 8px;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+
+    #orbCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .orb-halo {
+      position: absolute;
+      top: 53%;
+      left: 50%;
+      width: min(50%, 430px);
+      aspect-ratio: 1;
+      pointer-events: none;
+      border: 1px solid rgba(53, 214, 255, 0.08);
+      border-radius: 50%;
+      box-shadow:
+        0 0 70px rgba(47, 125, 255, 0.08),
+        inset 0 0 70px rgba(47, 125, 255, 0.04);
+      transform: translate(-50%, -50%);
+    }
+
+    .orb-halo::before,
+    .orb-halo::after {
+      position: absolute;
+      content: "";
+      border-radius: 50%;
+      border: 1px dashed rgba(115, 87, 255, 0.15);
+    }
+
+    .orb-halo::before {
+      inset: 9%;
+    }
+
+    .orb-halo::after {
+      inset: 21%;
+      border-color: rgba(53, 214, 255, 0.12);
+    }
+
+    .hero-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: 3;
+      display: grid;
+      width: clamp(104px, 8.4vw, 132px);
+      height: clamp(104px, 8.4vw, 132px);
+      align-content: center;
+      justify-items: center;
+      border: 1px solid rgba(53, 214, 255, 0.25);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(8, 27, 78, 0.9), rgba(3, 10, 34, 0.76) 65%, transparent 67%);
+      box-shadow: 0 0 36px rgba(53, 214, 255, 0.11);
+      transform: translate(-50%, -50%);
+    }
+
+    .hero-score-label {
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+    }
+
+    .hero-score {
+      margin: 2px 0;
+      color: #ffffff;
+      font-family: "Bahnschrift", "DIN Alternate", sans-serif;
+      font-size: clamp(31px, 2.25vw, 39px);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(53, 214, 255, 0.42);
+    }
+
+    .hero-score.pending {
+      color: var(--red);
+      font-size: 31px;
+      text-shadow: 0 0 18px rgba(255, 77, 79, 0.38);
+    }
+
+    .hero-score-caption {
+      color: #6e86b8;
+      font-size: 8px;
+      text-align: center;
+    }
+
+    .orb-metric {
+      position: absolute;
+      z-index: 4;
+      min-width: clamp(116px, 8.2vw, 142px);
+      max-width: 172px;
+      padding: 7px 10px 7px 13px;
+      border-left: 1px solid var(--metric-color, var(--cyan));
+      background: linear-gradient(90deg, rgba(17, 49, 124, 0.3), transparent);
+      pointer-events: none;
+    }
+
+    .orb-metric::before {
+      position: absolute;
+      top: 50%;
+      left: -3px;
+      width: 5px;
+      height: 5px;
+      content: "";
+      background: var(--metric-color, var(--cyan));
+      box-shadow: 0 0 9px var(--metric-color, var(--cyan));
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .orb-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+
+    .orb-metric strong {
+      display: flex;
+      gap: 5px;
+      align-items: baseline;
+      margin-top: 3px;
+      color: #ffffff;
+      font-family: "Bahnschrift", "DIN Alternate", "Microsoft YaHei", sans-serif;
+      font-size: clamp(17px, 1.2vw, 22px);
+      line-height: 1;
+    }
+
+    .orb-metric em {
+      color: #7187b8;
+      font-size: 8px;
+      font-style: normal;
+      font-weight: 400;
+    }
+
+    .metric-admin {
+      top: 24%;
+      left: 3.5%;
+      --metric-color: #35d6ff;
+    }
+
+    .metric-rd {
+      top: 24%;
+      right: 3.5%;
+      --metric-color: #7357ff;
+      text-align: right;
+      border-right: 1px solid var(--metric-color);
+      border-left: 0;
+      background: linear-gradient(270deg, rgba(57, 39, 154, 0.28), transparent);
+    }
+
+    .metric-rd::before {
+      right: -3px;
+      left: auto;
+    }
+
+    .metric-rated {
+      bottom: 19%;
+      left: 6%;
+      --metric-color: #36c661;
+    }
+
+    .metric-pending {
+      right: 6%;
+      bottom: 19%;
+      --metric-color: #ff4d4f;
+      text-align: right;
+      border-right: 1px solid var(--metric-color);
+      border-left: 0;
+      background: linear-gradient(270deg, rgba(146, 25, 55, 0.25), transparent);
+    }
+
+    .metric-pending::before {
+      right: -3px;
+      left: auto;
+    }
+
+    .hero-note {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      z-index: 4;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: #6179aa;
+      font-size: 8px;
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+
+    .hero-note::before {
+      width: 24px;
+      height: 1px;
+      content: "";
+      background: linear-gradient(90deg, transparent, var(--cyan));
+    }
+
+    .hero-note::after {
+      width: 24px;
+      height: 1px;
+      content: "";
+      background: linear-gradient(90deg, var(--cyan), transparent);
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: minmax(560px, 2.2fr) minmax(360px, 0.8fr);
+      gap: clamp(7px, 0.55vw, 10px);
+      min-height: 0;
+    }
+
+    .table-panel,
+    .standard-panel {
+      min-height: 0;
+    }
+
+    .table-panel {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+      padding: 0 11px 6px;
+    }
+
+    .table-filter {
+      width: 128px;
+    }
+
+    .table-filter select {
+      width: 100%;
+      height: 26px;
+      padding: 0 24px 0 8px;
+      color: var(--text-soft);
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      outline: none;
+      appearance: none;
+      background:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 12px) 10px / 4px 4px no-repeat,
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 8px) 10px / 4px 4px no-repeat,
+        rgba(3, 12, 35, 0.88);
+    }
+
+    .table-filter option {
+      color: #e8f2ff;
+      background: #071133;
+    }
+
+    .result-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      height: auto;
+      min-height: 0;
+      overflow: auto;
+      scrollbar-color: #27599f #050e28;
+      scrollbar-width: thin;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background: #050e28;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      border: 2px solid #050e28;
+      border-radius: 8px;
+      background: #27599f;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 7px 9px;
+      color: #7f96c5;
+      font-size: 10px;
+      font-weight: 600;
+      text-align: left;
+      white-space: nowrap;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid rgba(62, 122, 255, 0.28);
+      background: #071238;
+    }
+
+    tbody td {
+      padding: 7px 9px;
+      overflow: hidden;
+      color: var(--text-soft);
+      font-size: 10px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-bottom: 1px solid rgba(62, 122, 255, 0.09);
+    }
+
+    tbody tr {
+      cursor: pointer;
+      background: rgba(5, 15, 46, 0.42);
+      transition: background 0.15s ease;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(8, 23, 62, 0.5);
+    }
+
+    tbody tr:hover {
+      background: rgba(27, 69, 148, 0.36);
+    }
+
+    tbody tr.pending-row {
+      background: linear-gradient(90deg, rgba(255, 77, 79, 0.1), rgba(255, 77, 79, 0.012));
+    }
+
+    tbody tr.pending-row:hover {
+      background: linear-gradient(90deg, rgba(255, 77, 79, 0.16), rgba(255, 77, 79, 0.035));
+    }
+
+    .area-name {
+      color: #eef5ff;
+      font-weight: 650;
+    }
+
+    .score-cell {
+      color: var(--text);
+      font-family: "Bahnschrift", "DIN Alternate", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .score-cell.pending {
+      color: var(--red);
+      font-family: inherit;
+      font-size: 9px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      height: 19px;
+      padding: 0 6px;
+      font-size: 9px;
+      font-weight: 700;
+      border: 1px solid currentColor;
+      border-radius: 3px;
+    }
+
+    .rating-a {
+      color: var(--green);
+      background: rgba(54, 198, 97, 0.08);
+    }
+
+    .rating-b {
+      color: var(--blue);
+      background: rgba(47, 125, 255, 0.09);
+    }
+
+    .rating-c {
+      color: var(--yellow);
+      background: rgba(255, 197, 61, 0.08);
+    }
+
+    .rating-d,
+    .rating-pending {
+      color: var(--red);
+      background: rgba(255, 77, 79, 0.08);
+    }
+
+    .status-normal {
+      color: var(--green);
+      background: rgba(54, 198, 97, 0.07);
+    }
+
+    .status-warn {
+      color: var(--yellow);
+      background: rgba(255, 197, 61, 0.07);
+    }
+
+    .status-danger {
+      color: var(--red);
+      background: rgba(255, 77, 79, 0.08);
+    }
+
+    .source-status {
+      height: calc(100% - 36px);
+      min-height: 0;
+      padding: 9px 10px 10px;
+      overflow: hidden;
+    }
+
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      height: 100%;
+    }
+
+    .source-grid > div {
+      position: relative;
+      min-width: 0;
+      padding: 7px 8px;
+      border: 1px solid rgba(65, 137, 255, 0.18);
+      border-radius: 4px;
+      background:
+        linear-gradient(135deg, rgba(33, 83, 184, 0.17), rgba(8, 19, 59, 0.12)),
+        rgba(4, 13, 42, 0.45);
+    }
+
+    .source-grid > div::before {
+      position: absolute;
+      top: 0;
+      left: 8px;
+      width: 22px;
+      height: 1px;
+      background: var(--cyan);
+      box-shadow: 0 0 8px rgba(46, 190, 255, 0.7);
+      content: "";
+    }
+
+    .source-grid span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+    }
+
+    .source-grid strong {
+      display: block;
+      overflow: hidden;
+      color: #edf6ff;
+      font-family: "Bahnschrift", "DIN Alternate", sans-serif;
+      font-size: 12px;
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .source-grid .source-progress {
+      grid-column: 1 / -1;
+      align-self: end;
+      height: 5px;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 99px;
+      background: rgba(62, 120, 231, 0.14);
+    }
+
+    .source-grid .source-progress::before {
+      display: none;
+    }
+
+    .source-progress i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #246eff, #2ecaff);
+      box-shadow: 0 0 10px rgba(46, 202, 255, 0.45);
+      transition: width 0.35s ease;
+    }
+
+    .source-grid p {
+      grid-column: 1 / -1;
+      align-self: start;
+      margin: 0;
+      color: #8fa3ca;
+      font-size: 8px;
+      line-height: 1.45;
+    }
+
+    .empty-cell {
+      height: 110px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .standard-panel .panel-header {
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .standard-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .standard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      min-height: 0;
+      padding: 8px 10px 6px;
+      overflow: auto;
+      scrollbar-color: #27599f #050e28;
+      scrollbar-width: thin;
+    }
+
+    .standard-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 7px;
+      align-items: center;
+      min-width: 0;
+      min-height: 48px;
+      padding: 6px 7px;
+      border: 1px solid color-mix(in srgb, var(--grade-color) 22%, transparent);
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--grade-color) 5%, transparent);
+    }
+
+    .standard-grade {
+      display: grid;
+      width: 31px;
+      height: 29px;
+      place-items: center;
+      color: var(--grade-color);
+      font-family: "Bahnschrift", "DIN Alternate", sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      border: 1px solid color-mix(in srgb, var(--grade-color) 58%, transparent);
+      border-radius: 3px;
+      background: color-mix(in srgb, var(--grade-color) 9%, transparent);
+    }
+
+    .standard-copy {
+      min-width: 0;
+    }
+
+    .standard-copy strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #eef5ff;
+      font-size: 9px;
+    }
+
+    .standard-copy span {
+      display: block;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .donation-alert {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      margin: 0 10px 8px;
+      padding: 7px 9px;
+      color: #ffd591;
+      font-size: 9px;
+      line-height: 1.35;
+      border: 1px solid rgba(255, 197, 61, 0.28);
+      border-radius: 4px;
+      background: rgba(255, 197, 61, 0.06);
+    }
+
+    .donation-alert strong {
+      display: grid;
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      place-items: center;
+      color: #2a1d00;
+      font-size: 11px;
+      border-radius: 50%;
+      background: var(--yellow);
+    }
+
+    .ticker {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+      height: 34px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(4, 13, 40, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .ticker-label {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      height: 100%;
+      padding: 0 13px;
+      color: var(--cyan);
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      border-right: 1px solid var(--line);
+      background: rgba(6, 25, 68, 0.9);
+    }
+
+    .ticker-label::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      content: "";
+      background: var(--cyan);
+      box-shadow: 0 0 9px rgba(53, 214, 255, 0.86);
+    }
+
+    .ticker-window {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: tickerMove 52s linear infinite;
+      will-change: transform;
+    }
+
+    .ticker-group {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      padding-right: 32px;
+      white-space: nowrap;
+    }
+
+    .ticker-item {
+      color: var(--text-soft);
+      font-size: 10px;
+    }
+
+    .ticker-item::before {
+      margin-right: 8px;
+      color: var(--blue);
+      content: "◆";
+      font-size: 6px;
+    }
+
+    .ticker-item.warning {
+      color: #ffd591;
+    }
+
+    .ticker-item.warning::before {
+      color: var(--yellow);
+    }
+
+    @keyframes tickerMove {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(1, 4, 17, 0.78);
+      backdrop-filter: blur(6px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-dialog {
+      width: min(720px, 94vw);
+      max-height: min(760px, 90vh);
+      overflow: auto;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(10, 28, 76, 0.98), rgba(3, 9, 30, 0.99));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 15px 16px 11px;
+      border-bottom: 1px solid var(--line);
+      background: #071438;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: #f5f8ff;
+      font-size: 16px;
+    }
+
+    .modal-subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .close-button {
+      display: grid;
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      place-items: center;
+      color: var(--muted);
+      font-size: 18px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: rgba(3, 12, 36, 0.88);
+    }
+
+    .close-button:hover {
+      color: #ffffff;
+      border-color: var(--line-strong);
+    }
+
+    .modal-body {
+      padding: 14px 16px 18px;
+    }
+
+    .detail-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .detail-stat {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--line-soft);
+      border-radius: 4px;
+      background: rgba(4, 14, 43, 0.72);
+    }
+
+    .detail-stat span {
+      display: block;
+      margin-bottom: 4px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .detail-stat strong {
+      display: block;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .score-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px;
+      gap: 10px;
+      align-items: end;
+      padding: 11px;
+      border: 1px solid rgba(53, 214, 255, 0.23);
+      border-radius: 4px;
+      background: rgba(4, 20, 58, 0.64);
+    }
+
+    .score-entry label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .score-entry .field {
+      height: 32px;
+      font-size: 12px;
+    }
+
+    .entry-button {
+      height: 32px;
+      color: #031028;
+      font-size: 10px;
+      font-weight: 700;
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+      background: linear-gradient(90deg, #35d6ff, #4d8fff);
+      box-shadow: 0 0 18px rgba(53, 214, 255, 0.18);
+    }
+
+    .entry-message {
+      min-height: 14px;
+      margin-top: 6px;
+      color: var(--red);
+      font-size: 9px;
+    }
+
+    .detail-section {
+      margin-top: 13px;
+    }
+
+    .detail-section h3 {
+      margin: 0 0 7px;
+      color: #eef5ff;
+      font-size: 11px;
+    }
+
+    .deduction-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .deduction-item {
+      display: grid;
+      grid-template-columns: 118px 54px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 8px 9px;
+      color: var(--text-soft);
+      font-size: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 4px;
+      background: rgba(4, 14, 43, 0.62);
+    }
+
+    .deduction-item .dimension {
+      color: var(--cyan);
+    }
+
+    .deduction-item .amount {
+      color: var(--yellow);
+      font-family: "Bahnschrift", "DIN Alternate", sans-serif;
+      font-weight: 700;
+    }
+
+    .deduction-item.safety {
+      border-color: rgba(255, 77, 79, 0.3);
+      background: rgba(255, 77, 79, 0.06);
+    }
+
+    .photo-box {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 9px;
+      border: 1px dashed rgba(62, 122, 255, 0.3);
+      border-radius: 4px;
+      background: rgba(4, 14, 43, 0.52);
+    }
+
+    .photo-placeholder {
+      display: grid;
+      width: 132px;
+      height: 78px;
+      place-items: center;
+      color: #526a99;
+      font-size: 9px;
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      background: #050f2e;
+    }
+
+    .photo-box img {
+      display: block;
+      width: 132px;
+      height: 78px;
+      object-fit: cover;
+      border-radius: 3px;
+    }
+
+    .photo-copy {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.55;
+    }
+
+    .photo-copy strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text-soft);
+      font-size: 10px;
+    }
+
+    .echarts-fallback {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      color: var(--red);
+      font-size: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 1500px) {
+      .topbar {
+        grid-template-columns: 52px minmax(360px, 1fr) auto;
+        gap: 10px;
+        padding-right: 10px;
+      }
+
+      .brand-mark {
+        width: 46px;
+        height: 46px;
+        font-size: 23px;
+      }
+
+      .clock {
+        min-width: 135px;
+      }
+
+      .period-control {
+        width: 142px;
+      }
+
+      .operations {
+        grid-template-columns: minmax(258px, 0.88fr) minmax(480px, 2.16fr)
+          minmax(320px, 1.02fr);
+      }
+
+      .lower-grid {
+        grid-template-columns: minmax(520px, 2.05fr) minmax(340px, 0.95fr);
+      }
+    }
+
+    @media (max-width: 1320px) {
+      .subtitle span:nth-child(2) {
+        display: none;
+      }
+
+      .title-kicker,
+      .panel-en {
+        display: none;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+    }
+
+    @media (max-height: 820px) {
+      .dashboard {
+        grid-template-rows: 72px minmax(0, 1fr) 205px 30px;
+        gap: 6px;
+        padding: 6px 8px;
+      }
+
+      .panel-header {
+        min-height: 32px;
+        padding: 6px 10px 4px;
+      }
+
+      .panel-title {
+        font-size: 13px;
+      }
+
+      .chart {
+        width: calc(100% - 12px);
+        height: calc(100% - 40px);
+        margin: 0 6px 6px;
+      }
+
+      .kpi-panel {
+        padding: 26px 9px 7px;
+      }
+
+      .kpi-grid {
+        gap: 6px;
+      }
+
+      .kpi-card {
+        padding: 5px 8px 5px 10px;
+      }
+
+      .kpi-label {
+        font-size: 9px;
+      }
+
+      .kpi-value {
+        font-size: 20px;
+      }
+
+      .kpi-note {
+        margin-top: 2px;
+        font-size: 8px;
+      }
+
+      .left-stack {
+        grid-template-rows: minmax(138px, 0.78fr) minmax(236px, 1.22fr);
+      }
+
+      .center-stack {
+        grid-template-rows: minmax(154px, 0.82fr) minmax(214px, 1.18fr);
+      }
+
+      .right-stack {
+        grid-template-rows: minmax(158px, 0.96fr) minmax(0, 1.04fr);
+      }
+
+      .hero-heading {
+        top: 8px;
+      }
+
+      .hero-core {
+        width: 104px;
+        height: 104px;
+      }
+
+      .hero-score {
+        font-size: 31px;
+      }
+
+      .orb-metric {
+        min-width: 112px;
+        padding: 6px 8px 6px 10px;
+      }
+
+      .orb-metric strong {
+        font-size: 17px;
+      }
+
+      .table-filter {
+        width: 112px;
+      }
+
+      .table-filter select,
+      .result-count {
+        font-size: 9px;
+      }
+
+      .table-filter select {
+        height: 24px;
+      }
+
+      thead th,
+      tbody td {
+        padding: 5px 7px;
+        font-size: 9px;
+      }
+
+      .standard-grid {
+        gap: 5px;
+        padding: 6px 8px 5px;
+      }
+
+      .standard-item {
+        min-height: 43px;
+        padding: 4px 6px;
+      }
+
+      .donation-alert {
+        padding: 5px 8px;
+        font-size: 8px;
+      }
+
+      .source-status {
+        padding: 6px 8px 7px;
+      }
+
+      .source-grid {
+        gap: 5px;
+      }
+
+      .source-grid > div {
+        padding: 5px 7px;
+      }
+
+      .source-grid strong {
+        font-size: 11px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ticker-track {
+        animation-duration: 90s;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ==================== DOM结构 ==================== -->
+  <main class="dashboard">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">9</div>
+      <div class="title-block">
+        <div class="title-kicker">Ninebot 6S Visual Control Center</div>
+        <h1>九号电动 · 行政楼+研发楼 6S 巡检看板</h1>
+        <div class="subtitle">
+          <span>巡检范围：行政楼8个责任区 + 研发楼5个责任区 = 共13个责任区</span>
+          <span>评分依据：附录四《6S现场稽核评分表》，满分100分</span>
+          <span>评级口径：A 90-100 / B 80-89 / C 60-79 / D &lt;60 / 未打分待评级</span>
+        </div>
+      </div>
+
+      <div class="top-controls">
+        <div class="clock" aria-label="实时时间">
+          <div id="currentDate" class="clock-date"></div>
+          <div id="currentTime" class="clock-time"></div>
+        </div>
+        <div class="period-control">
+          <label class="control-label" for="periodSelect">统计周期</label>
+          <select id="periodSelect" class="field">
+            <option value="week">本周</option>
+            <option value="month" selected>本月</option>
+            <option value="previous">上一周期</option>
+            <option value="custom">自定义</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="customRange" class="custom-range">
+        <input id="customStart" class="field" type="date" aria-label="自定义开始日期">
+        <span>至</span>
+        <input id="customEnd" class="field" type="date" aria-label="自定义结束日期">
+      </div>
+    </header>
+
+    <section class="operations" aria-label="核心态势与图表">
+      <div class="side-stack left-stack">
+        <article class="panel kpi-panel">
+          <div class="kpi-panel-label">Core Indicators</div>
+          <div class="kpi-grid">
+            <div class="kpi-card" style="--kpi-color:#35d6ff; --kpi-glow:rgba(53,214,255,.34)">
+              <div class="kpi-label">责任区总数</div>
+              <div class="kpi-value-row">
+                <span id="kpiTotal" class="kpi-value">13</span>
+                <span class="kpi-unit">个</span>
+              </div>
+              <div class="kpi-note">行政楼8 + 研发楼5</div>
+            </div>
+            <div class="kpi-card" style="--kpi-color:#36c661; --kpi-glow:rgba(54,198,97,.28)">
+              <div class="kpi-label">已评级数</div>
+              <div class="kpi-value-row">
+                <span id="kpiRated" class="kpi-value">0</span>
+                <span class="kpi-unit">个</span>
+              </div>
+              <div class="kpi-note">当前周期已录入总分</div>
+            </div>
+            <div class="kpi-card" style="--kpi-color:#ff4d4f; --kpi-glow:rgba(255,77,79,.34)">
+              <div class="kpi-label">待评级数</div>
+              <div class="kpi-value-row">
+                <span id="kpiPending" class="kpi-value alert">13</span>
+                <span class="kpi-unit">个</span>
+              </div>
+              <div class="kpi-note">未录入分数统一待评级</div>
+            </div>
+            <div class="kpi-card" style="--kpi-color:#2f9cf4; --kpi-glow:rgba(47,156,244,.32)">
+              <div class="kpi-label">平均分</div>
+              <div class="kpi-value-row">
+                <span id="kpiAverage" class="kpi-value">-</span>
+                <span class="kpi-unit">分</span>
+              </div>
+              <div class="kpi-note">仅取已评级责任区均分</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2 class="panel-title">各部门责任区数量</h2>
+              <span class="panel-en">Department Coverage</span>
+            </div>
+            <span class="panel-meta">8个部门</span>
+          </header>
+          <div id="departmentChart" class="chart" role="img" aria-label="各部门责任区数量柱状图"></div>
+        </article>
+
+      </div>
+
+      <div class="side-stack center-stack">
+        <article class="panel hero-panel">
+          <canvas id="orbCanvas" aria-label="6S巡检数据网格主视觉"></canvas>
+          <div class="orb-halo" aria-hidden="true"></div>
+
+          <div class="hero-heading">
+            <div class="hero-title">6S巡检综合态势</div>
+            <div class="hero-subtitle">Administration &amp; R&amp;D Buildings Inspection Matrix</div>
+          </div>
+
+          <div class="hero-core">
+            <div class="hero-score-label">平均分</div>
+            <div id="heroScore" class="hero-score pending">--</div>
+            <div id="heroScoreCaption" class="hero-score-caption">等待首轮巡检打分</div>
+          </div>
+
+          <div class="orb-metric metric-admin">
+            <span>行政楼责任区 / ADMIN</span>
+            <strong>8 <em>ZONES</em></strong>
+          </div>
+          <div class="orb-metric metric-rd">
+            <span>研发楼责任区 / R&amp;D</span>
+            <strong>5 <em>ZONES</em></strong>
+          </div>
+          <div class="orb-metric metric-rated">
+            <span>当前周期已评级</span>
+            <strong id="heroRated">0 <em>RATED</em></strong>
+          </div>
+          <div class="orb-metric metric-pending">
+            <span>等待巡检评分</span>
+            <strong id="heroPending">13 <em>PENDING</em></strong>
+          </div>
+
+          <div id="heroNote" class="hero-note">6S巡检数据链路已就绪，等待打分录入</div>
+        </article>
+
+        <article class="panel">
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2 class="panel-title">各责任区总分</h2>
+              <span class="panel-en">Score By Responsibility Area</span>
+            </div>
+            <span class="panel-meta">Y轴 0-100 · 点击柱体下钻</span>
+          </header>
+          <div id="areaScoreChart" class="chart" role="img" aria-label="各责任区总分柱状图"></div>
+        </article>
+      </div>
+
+      <div class="side-stack right-stack">
+        <article class="panel">
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2 class="panel-title">评级分布</h2>
+              <span class="panel-en">Rating Distribution</span>
+            </div>
+            <span class="panel-meta">合计13个</span>
+          </header>
+          <div id="ratingPieChart" class="chart" role="img" aria-label="评级分布饼图"></div>
+        </article>
+
+        <article class="panel table-panel">
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2 class="panel-title">责任区明细</h2>
+              <span class="panel-en">Responsibility Areas</span>
+            </div>
+          </header>
+          <div class="panel-actions">
+            <div class="table-filter">
+              <select id="ratingFilter" aria-label="按评级筛选">
+                <option value="ALL">全部评级</option>
+                <option value="A">A级</option>
+                <option value="B">B级</option>
+                <option value="C">C级</option>
+                <option value="D">D级</option>
+                <option value="待评级">待评级</option>
+              </select>
+            </div>
+            <div class="table-filter">
+              <select id="departmentFilter" aria-label="按部门筛选"></select>
+            </div>
+            <span id="tableResultCount" class="result-count">共13个</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <colgroup>
+                <col style="width:20%">
+                <col style="width:18%">
+                <col style="width:11%">
+                <col style="width:13%">
+                <col style="width:10%">
+                <col style="width:11%">
+                <col style="width:17%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>责任区</th>
+                  <th>责任部门</th>
+                  <th>负责人</th>
+                  <th>6S对接人</th>
+                  <th>总分</th>
+                  <th>评级</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="detailTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="lower-grid" aria-label="评级标准">
+      <article class="panel standard-panel">
+        <header class="panel-header">
+          <div class="panel-heading">
+            <h2 class="panel-title">评级标准说明</h2>
+            <span class="panel-en">Rating Standard</span>
+          </div>
+          <span class="panel-meta">满分100分</span>
+        </header>
+        <div class="standard-grid">
+          <div class="standard-item" style="--grade-color:#36c661">
+            <div class="standard-grade">A</div>
+            <div class="standard-copy">
+              <strong>90-100分</strong>
+              <span>6S管理规范，可作示范区域</span>
+            </div>
+          </div>
+          <div class="standard-item" style="--grade-color:#2f9cf4">
+            <div class="standard-grade">B</div>
+            <div class="standard-copy">
+              <strong>80-89分</strong>
+              <span>整体较好，少量问题</span>
+            </div>
+          </div>
+          <div class="standard-item" style="--grade-color:#ffc53d">
+            <div class="standard-grade">C</div>
+            <div class="standard-copy">
+              <strong>60-79分</strong>
+              <span>基本达标，需整改提升</span>
+            </div>
+          </div>
+          <div class="standard-item" style="--grade-color:#ff4d4f">
+            <div class="standard-grade">D</div>
+            <div class="standard-copy">
+              <strong>&lt;60分</strong>
+              <span>问题突出或存在安全隐患，重点督办</span>
+            </div>
+          </div>
+          <div class="standard-item" style="--grade-color:#ff4d4f">
+            <div class="standard-grade" style="font-size:12px">待</div>
+            <div class="standard-copy">
+              <strong>未录入总分</strong>
+              <span>统一标注待评级</span>
+            </div>
+          </div>
+          <div class="standard-item" style="--grade-color:#7357ff">
+            <div class="standard-grade" style="font-size:12px">6S</div>
+            <div class="standard-copy">
+              <strong>六维权重</strong>
+              <span>20 / 15 / 15 / 10 / 10 / 30</span>
+            </div>
+          </div>
+        </div>
+        <div class="donation-alert">
+          <strong>!</strong>
+          <span>特别规则：出现任何安全项问题，除扣除相应分数外，还需进行“乐捐”处理。</span>
+        </div>
+      </article>
+
+      <article class="panel">
+        <header class="panel-header">
+          <div class="panel-heading">
+            <h2 class="panel-title">数据源状态</h2>
+            <span class="panel-en">Data Source Status</span>
+          </div>
+          <span class="panel-meta">30秒自动刷新</span>
+        </header>
+        <div id="sourceStatus" class="source-status"></div>
+      </article>
+    </section>
+
+    <footer class="ticker" aria-label="巡检动态">
+      <div class="ticker-label">巡检动态</div>
+      <div class="ticker-window">
+        <div id="tickerTrack" class="ticker-track"></div>
+      </div>
+    </footer>
+  </main>
+
+  <div id="detailModal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-header">
+        <div>
+          <h2 id="modalTitle" class="modal-title">责任区巡检明细</h2>
+          <div id="modalSubtitle" class="modal-subtitle"></div>
+        </div>
+        <button id="modalClose" class="close-button" type="button" aria-label="关闭">×</button>
+      </header>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ==================== ECharts初始化 ==================== */
+    const chartInstances = {};
+    let orbAnimationFrame = 0;
+
+    const CHART_TEXT_STYLE = {
+      color: "#b8c8ec",
+      fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif'
+    };
+
+    const TOOLTIP_STYLE = {
+      backgroundColor: "rgba(3, 10, 33, 0.97)",
+      borderColor: "rgba(75, 145, 255, 0.62)",
+      borderWidth: 1,
+      textStyle: {
+        color: "#f5f8ff",
+        fontSize: 11
+      },
+      extraCssText: "box-shadow:0 14px 34px rgba(0,0,0,.45);border-radius:4px;"
+    };
+
+    function initCharts() {
+      if (!window.echarts) {
+        document.querySelectorAll(".chart").forEach(function (element) {
+          element.innerHTML = '<div class="echarts-fallback">ECharts 加载失败，请检查网络后刷新页面。</div>';
+        });
+        return false;
+      }
+
+      chartInstances.ratingPie = echarts.init(document.getElementById("ratingPieChart"));
+      chartInstances.department = echarts.init(document.getElementById("departmentChart"));
+      chartInstances.areaScore = echarts.init(document.getElementById("areaScoreChart"));
+
+      chartInstances.areaScore.on("click", function (params) {
+        if (params && params.data && params.data.record) {
+          openDetailModal(params.data.record);
+        }
+      });
+
+      return true;
+    }
+
+    function resizeCharts() {
+      Object.keys(chartInstances).forEach(function (key) {
+        if (chartInstances[key]) {
+          chartInstances[key].resize();
+        }
+      });
+    }
+
+    /* ============================================================
+       【===【可编辑巡检数据区】仅在这里修改每一期巡检数据===】
+       每次巡检只修改每条记录的“总分（满分100分）”“扣分项”
+       “扣分原因”“现场照片”“巡检日期”；评级由业务逻辑自动计算。
+       ============================================================ */
+    // 字段严格对应“6S巡检打分表”：序号、责任区、责任部门、负责人、6S对接人、总分（满分100分）、评级、扣分项、扣分原因、现场照片、巡检日期。
+    // 以下内容逐条对应内部表，不使用虚构测试分数；录入总分后由业务逻辑自动重算评级并联动全部模块。
+    const MOCK_6S_DATA = [
+      {
+        序号: 1,
+        责任区: "行政楼一楼A栋",
+        责任部门: "电动行政部",
+        负责人: "秦焰",
+        "6S对接人": "顾旭文",
+        "总分（满分100分）": "88",
+        评级: "待评级",
+        扣分项: [{
+      维度: "整顿 SEITON",
+      扣分: 4,
+      原因: "部分工具未按定位标识归位"
+    },
+    {
+      维度: "清扫 SEISO",
+      扣分: 3,
+      原因: "设备周边存在卫生死角"
+    },
+    {
+      维度: "安全 SAFETY",
+      扣分: 5,
+      原因: "通道临时堆放物品，已完成现场整改"
+    }],
+        扣分原因: "主要问题为工具定置和现场清洁，安全项已同步处理",
+        现场照片: "",
+        巡检日期: "2026-10-13"
+      },
+      {
+        序号: 2,
+        责任区: "行政楼一楼B栋",
+        责任部门: "质量中心",
+        负责人: "申建风",
+        "6S对接人": "侯舒娅",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 3,
+        责任区: "行政楼二楼A栋",
+        责任部门: "供应链中心",
+        负责人: "王延荣",
+        "6S对接人": "吕迎春",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 4,
+        责任区: "行政楼二楼B栋",
+        责任部门: "质量中心",
+        负责人: "申建风",
+        "6S对接人": "侯舒娅",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 5,
+        责任区: "行政楼三楼A栋",
+        责任部门: "电动财务部",
+        负责人: "杨同娟",
+        "6S对接人": "李亚亚",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 6,
+        责任区: "行政楼三楼B栋",
+        责任部门: "电动行政部",
+        负责人: "秦焰",
+        "6S对接人": "许鹏程",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 7,
+        责任区: "行政楼四楼A栋",
+        责任部门: "电商运营部",
+        负责人: "杨承志",
+        "6S对接人": "刘烨",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 8,
+        责任区: "行政楼四楼B栋",
+        责任部门: "性能产品线",
+        负责人: "李伟",
+        "6S对接人": "待补充",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 9,
+        责任区: "研发楼一楼",
+        责任部门: "整车技术平台中心",
+        负责人: "唐启成",
+        "6S对接人": "邹林雨",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 10,
+        责任区: "研发楼二楼",
+        责任部门: "性能产品线",
+        负责人: "卡尔",
+        "6S对接人": "石陈阳",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 11,
+        责任区: "研发楼三楼",
+        责任部门: "大众产品线",
+        负责人: "蒋旭东",
+        "6S对接人": "葛爱山",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 12,
+        责任区: "研发楼四楼",
+        责任部门: "整车技术平台中心",
+        负责人: "骆杰",
+        "6S对接人": "吴任东",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      },
+      {
+        序号: 13,
+        责任区: "研发楼五楼",
+        责任部门: "整车技术平台中心",
+        负责人: "鲁连军",
+        "6S对接人": "王瑞",
+        "总分（满分100分）": "",
+        评级: "待评级",
+        扣分项: [],
+        扣分原因: "",
+        现场照片: "",
+        巡检日期: ""
+      }
+    ];
+
+    /* ====================【可编辑巡检数据区结束】==================== */
+
+    /* ==================== 业务逻辑 ==================== */
+    const TOTAL_RESPONSIBILITY_AREAS = 13;
+    const RATING_ORDER = ["A", "B", "C", "D", "待评级"];
+    const RATING_COLORS = {
+      A: "#36c661",
+      B: "#2f9cf4",
+      C: "#ffc53d",
+      D: "#ff4d4f",
+      待评级: "#ff4d4f"
+    };
+    const DEPARTMENT_ORDER = [
+      "电动行政部",
+      "质量中心",
+      "供应链中心",
+      "电动财务部",
+      "电商运营部",
+      "性能产品线",
+      "整车技术平台中心",
+      "大众产品线"
+    ];
+    const DIMENSIONS = [
+      { key: "整顿 SEITON", shortName: "整顿", weight: 20, en: "SEITON" },
+      { key: "整理 SEIRI", shortName: "整理", weight: 15, en: "SEIRI" },
+      { key: "清扫 SEISO", shortName: "清扫", weight: 15, en: "SEISO" },
+      { key: "清洁 SEIKETSU", shortName: "清洁", weight: 10, en: "SEIKETSU" },
+      { key: "素养 SHITSUKE", shortName: "素养", weight: 10, en: "SHITSUKE" },
+      { key: "安全 SAFETY", shortName: "安全", weight: 30, en: "SAFETY" }
+    ];
+
+    const state = {
+      sourceData: [],
+      data: [],
+      period: "month",
+      customStart: "",
+      customEnd: "",
+      ratingFilter: "ALL",
+      departmentFilter: "ALL",
+      sourceMode: "mock",
+      lastRefreshAt: null,
+      clockTimer: null,
+      refreshTimer: null,
+      selectedSequence: null
+    };
+
+    function cloneData(data) {
+      return JSON.parse(JSON.stringify(data));
+    }
+
+    function getScoreField(record) {
+      if (!record) {
+        return undefined;
+      }
+      if (record["总分（满分100分）"] !== undefined) {
+        return record["总分（满分100分）"];
+      }
+      return record["总分(满分100)"];
+    }
+
+    function setScoreField(record, score) {
+      record["总分（满分100分）"] = score;
+      record["总分(满分100)"] = score;
+      return record;
+    }
+
+    function resolveRating(score) {
+      const numericScore = Number(score);
+      if (score === null || score === undefined || score === "" || Number.isNaN(numericScore)) {
+        return "待评级";
+      }
+      if (numericScore >= 90) {
+        return "A";
+      }
+      if (numericScore >= 80) {
+        return "B";
+      }
+      if (numericScore >= 60) {
+        return "C";
+      }
+      return "D";
+    }
+
+    function normalizeData(data) {
+      return cloneData(data).map(function (record) {
+        const score = getScoreField(record);
+        const normalizedScore =
+          score === null || score === undefined || score === "" || Number.isNaN(Number(score))
+            ? ""
+            : Number(score);
+        return Object.assign({}, record, {
+          "总分（满分100分）": normalizedScore,
+          评级: resolveRating(normalizedScore)
+        });
+      });
+    }
+
+    function getScore(record) {
+      if (!record || record._periodExcluded) {
+        return null;
+      }
+      const rawScore = getScoreField(record);
+      if (rawScore === null || rawScore === undefined || rawScore === "") {
+        return null;
+      }
+      const score = Number(rawScore);
+      return Number.isNaN(score) ? null : score;
+    }
+
+    function getRating(record) {
+      return resolveRating(getScore(record));
+    }
+
+    function getDeductionItems(record) {
+      const rawItems = record && record["扣分项"];
+      if (Array.isArray(rawItems)) {
+        return rawItems
+          .map(function (item) {
+            if (item && typeof item === "object") {
+              return {
+                dimension: item["维度"] || item["类型"] || item["dimension"] || "未分类",
+                amount: Number(item["分值"] || item["扣分"] || item["amount"] || 0),
+                reason: item["原因"] || item["说明"] || item["reason"] || "未填写扣分原因"
+              };
+            }
+            return {
+              dimension: "未分类",
+              amount: 0,
+              reason: String(item || "")
+            };
+          })
+          .filter(function (item) {
+            return item.reason || item.amount;
+          });
+      }
+
+      if (typeof rawItems === "string" && rawItems.trim()) {
+        return rawItems
+          .split(/[；;\n]/)
+          .map(function (text) {
+            return {
+              dimension: "未分类",
+              amount: 0,
+              reason: text.trim()
+            };
+          })
+          .filter(function (item) {
+            return item.reason;
+          });
+      }
+
+      return [];
+    }
+
+    function hasSafetyIssue(record) {
+      const deductionSafetyIssue = getDeductionItems(record).some(function (item) {
+        return item.dimension.indexOf("安全") !== -1 && item.amount > 0;
+      });
+      if (deductionSafetyIssue) {
+        return true;
+      }
+      const reason = String((record && record["扣分原因"]) || "");
+      return (
+        reason.indexOf("安全项") !== -1 ||
+        reason.indexOf("安全隐患") !== -1 ||
+        reason.indexOf("消防") !== -1 ||
+        reason.indexOf("用电") !== -1
+      );
+    }
+
+    function getRecordStatus(record) {
+      const score = getScore(record);
+      if (score === null) {
+        return { label: "待评级", className: "status-danger" };
+      }
+      if (hasSafetyIssue(record)) {
+        return { label: "需乐捐", className: "status-danger" };
+      }
+      if (getRating(record) === "D") {
+        return { label: "重点督办", className: "status-danger" };
+      }
+      if (getRating(record) === "C") {
+        return { label: "需整改", className: "status-warn" };
+      }
+      return { label: "正常", className: "status-normal" };
+    }
+
+    function getDimensionDeductions(record) {
+      const score = getScore(record);
+      const totalDeduction = score === null ? 0 : Math.max(0, 100 - score);
+      const rawDeductions = DIMENSIONS.map(function (dimension) {
+        return getDeductionItems(record)
+          .filter(function (item) {
+            return item.dimension === dimension.key;
+          })
+          .reduce(function (sum, item) {
+            return sum + (Number(item.amount) || 0);
+          }, 0);
+      });
+      const rawTotal = rawDeductions.reduce(function (sum, value) {
+        return sum + value;
+      }, 0);
+
+      if (totalDeduction <= 0 || Math.abs(rawTotal - totalDeduction) < 0.01) {
+        return rawDeductions;
+      }
+
+      let reconciled;
+      if (rawTotal <= 0) {
+        reconciled = DIMENSIONS.map(function (dimension) {
+          return Number((totalDeduction * dimension.weight / 100).toFixed(2));
+        });
+      } else {
+        const scale = totalDeduction / rawTotal;
+        reconciled = rawDeductions.map(function (value) {
+          return Number((value * scale).toFixed(2));
+        });
+      }
+
+      const reconciledTotal = reconciled.reduce(function (sum, value) {
+        return sum + value;
+      }, 0);
+      const difference = Number((totalDeduction - reconciledTotal).toFixed(2));
+      if (Math.abs(difference) >= 0.01) {
+        let targetIndex = 0;
+        for (let index = 1; index < reconciled.length; index += 1) {
+          if (reconciled[index] > reconciled[targetIndex]) {
+            targetIndex = index;
+          }
+        }
+        reconciled[targetIndex] = Number((reconciled[targetIndex] + difference).toFixed(2));
+      }
+      return reconciled;
+    }
+
+    function parseDate(dateText) {
+      if (!dateText) {
+        return null;
+      }
+      const parts = String(dateText).split("-").map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) {
+        return null;
+      }
+      return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+    }
+
+    function toInputDate(date) {
+      return (
+        date.getFullYear() +
+        "-" +
+        String(date.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(date.getDate()).padStart(2, "0")
+      );
+    }
+
+    function getPeriodRange() {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      if (state.period === "week") {
+        const mondayOffset = (today.getDay() + 6) % 7;
+        const start = new Date(today);
+        start.setDate(today.getDate() - mondayOffset);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        return { start: start, end: end };
+      }
+
+      if (state.period === "month") {
+        return {
+          start: new Date(today.getFullYear(), today.getMonth(), 1),
+          end: new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999)
+        };
+      }
+
+      if (state.period === "previous") {
+        return {
+          start: new Date(today.getFullYear(), today.getMonth() - 1, 1),
+          end: new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999)
+        };
+      }
+
+      if (state.period === "custom") {
+        const start = state.customStart ? parseDate(state.customStart) : null;
+        const end = state.customEnd ? parseDate(state.customEnd) : null;
+        if (end) {
+          end.setHours(23, 59, 59, 999);
+        }
+        return { start: start, end: end };
+      }
+
+      return { start: null, end: null };
+    }
+
+    function filterByPeriod(data) {
+      const range = getPeriodRange();
+      return data.map(function (record) {
+        const score = getScore(record);
+        const inspectionDate = parseDate(record["巡检日期"]);
+
+        if (score === null || !inspectionDate || (!range.start && !range.end)) {
+          return Object.assign({}, record);
+        }
+
+        const outsideStart = range.start && inspectionDate < range.start;
+        const outsideEnd = range.end && inspectionDate > range.end;
+        if (!outsideStart && !outsideEnd) {
+          return Object.assign({}, record);
+        }
+
+        return Object.assign({}, record, {
+          "总分（满分100分）": "",
+          评级: "待评级",
+          _periodExcluded: true
+        });
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value === null || value === undefined ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const weekday = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][now.getDay()];
+      document.getElementById("currentDate").textContent =
+        now.getFullYear() +
+        "-" +
+        String(now.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(now.getDate()).padStart(2, "0") +
+        " " +
+        weekday;
+      document.getElementById("currentTime").textContent =
+        String(now.getHours()).padStart(2, "0") +
+        ":" +
+        String(now.getMinutes()).padStart(2, "0") +
+        ":" +
+        String(now.getSeconds()).padStart(2, "0");
+    }
+
+    function getMetrics(data) {
+      const ratedRecords = data.filter(function (record) {
+        return getScore(record) !== null;
+      });
+      const ratedCount = ratedRecords.length;
+      const pendingCount = Math.max(0, TOTAL_RESPONSIBILITY_AREAS - ratedCount);
+      const average = ratedCount
+        ? ratedRecords.reduce(function (sum, record) {
+            return sum + getScore(record);
+          }, 0) / ratedCount
+        : null;
+      return {
+        ratedRecords: ratedRecords,
+        ratedCount: ratedCount,
+        pendingCount: pendingCount,
+        average: average
+      };
+    }
+
+    function updateKpis(data) {
+      const metrics = getMetrics(data);
+      document.getElementById("kpiTotal").textContent = String(TOTAL_RESPONSIBILITY_AREAS);
+      document.getElementById("kpiRated").textContent = String(metrics.ratedCount);
+      document.getElementById("kpiPending").textContent = String(metrics.pendingCount);
+      document.getElementById("kpiAverage").textContent =
+        metrics.average === null ? "-" : metrics.average.toFixed(1);
+      document.getElementById("kpiAverage").classList.toggle(
+        "alert",
+        metrics.average !== null && metrics.average < 60
+      );
+
+      const heroScore = document.getElementById("heroScore");
+      heroScore.textContent = metrics.average === null ? "--" : metrics.average.toFixed(1);
+      heroScore.classList.toggle("pending", metrics.average === null);
+      document.getElementById("heroScoreCaption").textContent =
+        metrics.average === null ? "等待首轮巡检打分" : "当前周期综合平均分";
+      document.getElementById("heroRated").innerHTML =
+        metrics.ratedCount + " <em>RATED</em>";
+      document.getElementById("heroPending").innerHTML =
+        metrics.pendingCount + " <em>PENDING</em>";
+      document.getElementById("heroNote").textContent =
+        metrics.pendingCount === TOTAL_RESPONSIBILITY_AREAS
+          ? "6S巡检数据链路已就绪，等待打分录入"
+          : "已采集 " +
+            metrics.ratedCount +
+            " 个责任区评分，" +
+            metrics.pendingCount +
+            " 个责任区等待评级";
+    }
+
+    function buildRatingCounts(data) {
+      const counts = { A: 0, B: 0, C: 0, D: 0, 待评级: 0 };
+      data.forEach(function (record) {
+        counts[getRating(record)] += 1;
+      });
+      return counts;
+    }
+
+    function renderRatingPie(data) {
+      const chart = chartInstances.ratingPie;
+      if (!chart) {
+        return;
+      }
+      const counts = buildRatingCounts(data);
+      const total = data.length;
+      const pendingCount = counts["待评级"];
+      const chartData = RATING_ORDER.map(function (rating) {
+        return {
+          name: rating === "待评级" ? "待评级" : rating + "级",
+          value: counts[rating],
+          rating: rating,
+          itemStyle: {
+            color: RATING_COLORS[rating],
+            borderColor: "#050d28",
+            borderWidth: 2,
+            opacity: rating === "待评级" ? 0.82 : 1
+          }
+        };
+      });
+
+      chart.setOption(
+        {
+          animationDuration: 500,
+          tooltip: Object.assign({}, TOOLTIP_STYLE, {
+            trigger: "item",
+            formatter: function (params) {
+              return (
+                "<strong>" +
+                escapeHtml(params.name) +
+                "</strong><br>数量：" +
+                params.value +
+                " 个<br>占比：" +
+                (params.percent || 0) +
+                "%"
+              );
+            }
+          }),
+          legend: {
+            bottom: 0,
+            left: "center",
+            itemWidth: 7,
+            itemHeight: 7,
+            itemGap: 9,
+            icon: "circle",
+            formatter: function (name) {
+              const rating = name === "待评级" ? "待评级" : name.replace("级", "");
+              return name + "  " + counts[rating];
+            },
+            textStyle: {
+              color: "#7187b8",
+              fontSize: 9
+            }
+          },
+          graphic: [
+            {
+              type: "text",
+              left: "center",
+              top: "30%",
+              style: {
+                text: String(total),
+                fill: "#ffffff",
+                font: '800 28px "Bahnschrift", "Microsoft YaHei"',
+                textAlign: "center"
+              }
+            },
+            {
+              type: "text",
+              left: "center",
+              top: "52%",
+              style: {
+                text: pendingCount ? "待评级 " + pendingCount : "已全部评级",
+                fill: pendingCount ? "#ff7779" : "#36c661",
+                font: '10px "Microsoft YaHei"',
+                textAlign: "center"
+              }
+            }
+          ],
+          series: [
+            {
+              name: "评级分布",
+              type: "pie",
+              center: ["50%", "42%"],
+              radius: ["50%", "69%"],
+              minAngle: 4,
+              avoidLabelOverlap: true,
+              silent: false,
+              label: {
+                show: false
+              },
+              labelLine: {
+                show: false
+              },
+              emphasis: {
+                scaleSize: 4,
+                itemStyle: {
+                  shadowBlur: 12,
+                  shadowColor: "rgba(53,214,255,.3)"
+                }
+              },
+              data: chartData
+            }
+          ]
+        },
+        true
+      );
+    }
+
+    function renderDepartmentChart(data) {
+      const chart = chartInstances.department;
+      if (!chart) {
+        return;
+      }
+      const counts = DEPARTMENT_ORDER.map(function (department) {
+        return data.filter(function (record) {
+          return record["责任部门"] === department;
+        }).length;
+      });
+      const axisMax = Math.max(4, Math.max.apply(null, counts) + 1);
+
+      chart.setOption(
+        {
+          animationDuration: 500,
+          grid: {
+            top: 8,
+            right: 44,
+            bottom: 24,
+            left: 96,
+            containLabel: false
+          },
+          tooltip: Object.assign({}, TOOLTIP_STYLE, {
+            trigger: "axis",
+            axisPointer: {
+              type: "shadow",
+              shadowStyle: {
+                color: "rgba(53,214,255,.06)"
+              }
+            },
+            formatter: function (params) {
+              const item = params[0];
+              return "<strong>" + escapeHtml(item.name) + "</strong><br>责任区数量：" + item.value + " 个";
+            }
+          }),
+          xAxis: {
+            type: "value",
+            min: 0,
+            max: axisMax,
+            interval: 1,
+            axisLabel: {
+              color: "#6179aa",
+              fontSize: 9,
+              margin: 10
+            },
+            splitLine: {
+              lineStyle: {
+                color: "rgba(62,122,255,.1)",
+                type: "dashed"
+              }
+            }
+          },
+          yAxis: {
+            type: "category",
+            inverse: true,
+            data: DEPARTMENT_ORDER,
+            axisTick: { show: false },
+            axisLine: {
+              lineStyle: { color: "rgba(62,122,255,.2)" }
+            },
+            axisLabel: {
+              color: "#9eb1d8",
+              fontSize: 9.5,
+              lineHeight: 11,
+              width: 86,
+              overflow: "truncate"
+            }
+          },
+          series: [
+            {
+              name: "责任区数量",
+              type: "bar",
+              barWidth: 8,
+              data: counts.map(function (value, index) {
+                const isMax = value === Math.max.apply(null, counts) && value > 0;
+                return {
+                  value: value,
+                  itemStyle: {
+                    color: isMax
+                      ? {
+                          type: "linear",
+                          x: 0,
+                          y: 0,
+                          x2: 1,
+                          y2: 0,
+                          colorStops: [
+                            { offset: 0, color: "#35d6ff" },
+                            { offset: 1, color: "#36c661" }
+                          ]
+                        }
+                      : {
+                          type: "linear",
+                          x: 0,
+                          y: 0,
+                          x2: 1,
+                          y2: 0,
+                          colorStops: [
+                            { offset: 0, color: "#2f9cf4" },
+                            { offset: 1, color: index % 2 ? "#7357ff" : "#35d6ff" }
+                          ]
+                        },
+                    borderRadius: [0, 3, 3, 0],
+                    opacity: value ? 0.9 : 0.24,
+                    shadowBlur: value ? 8 : 0,
+                    shadowColor: isMax ? "rgba(54,198,97,.34)" : "rgba(47,125,255,.3)"
+                  }
+                };
+              }),
+              label: {
+                show: true,
+                position: "right",
+                color: "#dce8ff",
+                fontSize: 9,
+                fontWeight: 700,
+                distance: 5,
+                padding: [1, 3],
+                borderRadius: 2,
+                backgroundColor: "rgba(3, 8, 23, 0.76)"
+              },
+              emphasis: {
+                itemStyle: {
+                  opacity: 1,
+                  shadowBlur: 14,
+                  shadowColor: "rgba(53,214,255,.5)"
+                }
+              }
+            }
+          ]
+        },
+        true
+      );
+    }
+
+    function renderAreaScoreChart(filteredData) {
+      const chart = chartInstances.areaScore;
+      if (!chart) {
+        return;
+      }
+      const chartData = filteredData.map(function (record) {
+        const score = getScore(record);
+        const rating = getRating(record);
+        const barColor = RATING_COLORS[rating] || RATING_COLORS["待评级"];
+        return {
+          value: score === null ? 0.8 : score,
+          record: record,
+          score: score,
+          rating: rating,
+          itemStyle: {
+            color:
+              score === null
+                ? {
+                    type: "linear",
+                    x: 0,
+                    y: 0,
+                    x2: 0,
+                    y2: 1,
+                    colorStops: [
+                      { offset: 0, color: "rgba(255,77,79,.62)" },
+                      { offset: 1, color: "rgba(255,77,79,.05)" }
+                    ]
+                  }
+                : {
+                    type: "linear",
+                    x: 0,
+                    y: 0,
+                    x2: 0,
+                    y2: 1,
+                    colorStops: [
+                      { offset: 0, color: barColor },
+                      { offset: 1, color: barColor + "33" }
+                    ]
+                  },
+            borderColor: barColor,
+            borderWidth: score === null ? 1 : 0,
+            borderRadius: [2, 2, 0, 0],
+            opacity: score === null ? 0.72 : 0.95,
+            shadowBlur: score === null ? 0 : 10,
+            shadowColor: barColor + "55"
+          }
+        };
+      });
+
+      chart.setOption(
+        {
+          animationDuration: 550,
+          grid: {
+            top: 34,
+            right: 28,
+            bottom: 48,
+            left: 52,
+            containLabel: false
+          },
+          tooltip: Object.assign({}, TOOLTIP_STYLE, {
+            trigger: "axis",
+            axisPointer: {
+              type: "shadow",
+              shadowStyle: {
+                color: "rgba(53,214,255,.05)"
+              }
+            },
+            formatter: function (params) {
+              const item = params[0];
+              const record = item.data.record;
+              if (!record || item.data.score === null) {
+                return "<strong>" + escapeHtml(item.name) + "</strong><br>当前周期暂无分数，待评级";
+              }
+              const status = getRecordStatus(record);
+              return (
+                "<strong>" +
+                escapeHtml(record["责任区"]) +
+                "</strong><br>责任部门：" +
+                escapeHtml(record["责任部门"]) +
+                "<br>总分：" +
+                item.data.score.toFixed(0) +
+                " 分<br>评级：" +
+                item.data.rating +
+                "级<br>状态：" +
+                escapeHtml(status.label) +
+                "<br><span style='color:#7187b8'>点击查看巡检明细</span>"
+              );
+            }
+          }),
+          xAxis: {
+            type: "category",
+            name: "责任区序号",
+            nameLocation: "middle",
+            nameGap: 32,
+            nameTextStyle: {
+              color: "#6077a8",
+              fontSize: 9
+            },
+            data: filteredData.map(function (record) {
+              return String(record["序号"]);
+            }),
+            axisTick: { show: false },
+            axisLine: {
+              lineStyle: { color: "rgba(62,122,255,.22)" }
+            },
+            axisLabel: {
+              color: "#9eb1d8",
+              fontSize: 10,
+              interval: 0,
+              margin: 13
+            }
+          },
+          yAxis: {
+            type: "value",
+            name: "得分",
+            nameGap: 16,
+            nameTextStyle: {
+              color: "#6077a8",
+              fontSize: 9
+            },
+            min: 0,
+            max: 100,
+            interval: 20,
+            axisTick: { show: false },
+            axisLine: {
+              show: true,
+              lineStyle: { color: "rgba(62,122,255,.22)" }
+            },
+            axisLabel: {
+              color: "#9eb1d8",
+              fontSize: 10,
+              margin: 10,
+              formatter: "{value}"
+            },
+            splitLine: {
+              lineStyle: {
+                color: "rgba(62,122,255,.1)",
+                type: "dashed"
+              }
+            }
+          },
+          series: [
+            {
+              name: "总分",
+              type: "bar",
+              barMaxWidth: 22,
+              barMinHeight: 2,
+              barCategoryGap: "38%",
+              data: chartData,
+              label: {
+                show: true,
+                position: "top",
+                distance: 4,
+                fontSize: 10,
+                fontWeight: 700,
+                color: function (params) {
+                  return params.data.score === null ? "#ff4d4f" : RATING_COLORS[params.data.rating];
+                },
+                formatter: function (params) {
+                  return params.data.score === null ? "待" : params.data.score.toFixed(0);
+                }
+              },
+              emphasis: {
+                itemStyle: {
+                  opacity: 1,
+                  shadowBlur: 15,
+                  shadowColor: "rgba(53,214,255,.42)"
+                }
+              },
+              markLine: {
+                silent: true,
+                symbol: "none",
+                label: {
+                  position: "insideEndTop",
+                  distance: 3,
+                  color: "#b8c8ec",
+                  fontSize: 8,
+                  backgroundColor: "rgba(3,8,23,.78)",
+                  borderRadius: 2,
+                  padding: [1, 3],
+                  formatter: "{b}"
+                },
+                lineStyle: {
+                  width: 1,
+                  type: "dashed",
+                  opacity: 0.48
+                },
+                data: [
+                  { name: "A 90", yAxis: 90, lineStyle: { color: "#36c661" } },
+                  { name: "B 80", yAxis: 80, lineStyle: { color: "#2f9cf4" } },
+                  { name: "C 60", yAxis: 60, lineStyle: { color: "#ffc53d" } }
+                ]
+              }
+            }
+          ]
+        },
+        true
+      );
+    }
+
+    function renderRadarChart(data) {
+      const chart = chartInstances.radar;
+      if (!chart) {
+        return;
+      }
+      const ratedRecords = data.filter(function (record) {
+        return getScore(record) !== null;
+      });
+      const dimensionScores = DIMENSIONS.map(function (dimension, dimensionIndex) {
+        if (!ratedRecords.length) {
+          return 0;
+        }
+        const averageDeduction =
+          ratedRecords.reduce(function (sum, record) {
+            return sum + getDimensionDeductions(record)[dimensionIndex];
+          }, 0) / ratedRecords.length;
+        return Math.max(0, dimension.weight - averageDeduction);
+      });
+      const dimensionRates = dimensionScores.map(function (score, index) {
+        return Number((score / DIMENSIONS[index].weight * 100).toFixed(1));
+      });
+      const minimumRate = Math.min.apply(null, dimensionRates);
+      const minimumIndex = dimensionRates.indexOf(minimumRate);
+
+      chart.setOption(
+        {
+          animationDuration: 500,
+          tooltip: Object.assign({}, TOOLTIP_STYLE, {
+            trigger: "item",
+            formatter: function () {
+              if (!ratedRecords.length) {
+                return "暂无已评级数据";
+              }
+              return DIMENSIONS.map(function (dimension, index) {
+                return (
+                  "<div style='display:flex;justify-content:space-between;gap:22px'>" +
+                  "<span>" +
+                  escapeHtml(dimension.key) +
+                  "</span><strong style='color:" +
+                  (index === minimumIndex ? "#ffc53d" : "#f5f8ff") +
+                  "'>" +
+                  dimensionScores[index].toFixed(1) +
+                  " / " +
+                  dimension.weight +
+                  " 分 · " +
+                  dimensionRates[index].toFixed(1) +
+                  "%</strong></div>"
+                );
+              }).join("");
+            }
+          }),
+          radar: {
+            center: ["50%", "46%"],
+            radius: "58%",
+            splitNumber: 4,
+            shape: "polygon",
+            indicator: DIMENSIONS.map(function (dimension) {
+              return {
+                name: dimension.shortName + "\n" + dimension.en,
+                max: 100
+              };
+            }),
+            axisName: {
+              color: "#9eb1d8",
+              fontSize: 9,
+              lineHeight: 12
+            },
+            axisLine: {
+              lineStyle: {
+                color: "rgba(62,122,255,.22)"
+              }
+            },
+            splitLine: {
+              lineStyle: {
+                color: "rgba(62,122,255,.16)"
+              }
+            },
+            splitArea: {
+              areaStyle: {
+                color: ["rgba(47,125,255,.018)", "rgba(47,125,255,.045)"]
+              }
+            }
+          },
+          graphic: ratedRecords.length
+            ? []
+            : [
+                {
+                  type: "text",
+                  left: "center",
+                  top: "43%",
+                  style: {
+                    text: "等待评分",
+                    fill: "#7187b8",
+                    font: '10px "Microsoft YaHei"'
+                  }
+                }
+              ],
+          series: [
+            {
+              name: "6S六维度得分率",
+              type: "radar",
+              symbol: "circle",
+              symbolSize: 4,
+              lineStyle: {
+                width: 1.5,
+                color: "#35d6ff",
+                shadowBlur: 8,
+                shadowColor: "rgba(53,214,255,.6)"
+              },
+              itemStyle: {
+                color: "#35d6ff",
+                borderColor: "#eaffff",
+                borderWidth: 1
+              },
+              areaStyle: {
+                color: {
+                  type: "radial",
+                  x: 0.5,
+                  y: 0.5,
+                  r: 0.5,
+                  colorStops: [
+                    { offset: 0, color: "rgba(53,214,255,.33)" },
+                    { offset: 1, color: "rgba(47,125,255,.06)" }
+                  ]
+                }
+              },
+              data: [
+                {
+                  value: dimensionRates,
+                  name: "平均得分率"
+                }
+              ]
+            }
+          ]
+        },
+        true
+      );
+
+      const note = document.getElementById("radarNote");
+      if (!ratedRecords.length) {
+        note.innerHTML = "短板维度：<strong>暂无已评级数据</strong>";
+      } else {
+        note.innerHTML =
+          "短板维度：<strong>" +
+          escapeHtml(DIMENSIONS[minimumIndex].shortName) +
+          "</strong> · " +
+          dimensionScores[minimumIndex].toFixed(1) +
+          " / " +
+          DIMENSIONS[minimumIndex].weight +
+          " 分 · " +
+          minimumRate.toFixed(1) +
+          "%";
+      }
+    }
+
+    function getRatingClass(rating) {
+      return "rating-" + (rating === "待评级" ? "pending" : rating.toLowerCase());
+    }
+
+    function renderTable(data) {
+      const body = document.getElementById("detailTableBody");
+      const filteredRows = data.filter(function (record) {
+        const matchRating =
+          state.ratingFilter === "ALL" || getRating(record) === state.ratingFilter;
+        const matchDepartment =
+          state.departmentFilter === "ALL" || record["责任部门"] === state.departmentFilter;
+        return matchRating && matchDepartment;
+      });
+
+      document.getElementById("tableResultCount").textContent = "共" + filteredRows.length + "个";
+
+      if (!filteredRows.length) {
+        body.innerHTML = '<tr><td class="empty-cell" colspan="7">暂无符合条件的数据</td></tr>';
+        return;
+      }
+
+      body.innerHTML = filteredRows
+        .map(function (record) {
+          const score = getScore(record);
+          const rating = getRating(record);
+          const status = getRecordStatus(record);
+          const scoreCell =
+            score === null
+              ? '<span class="score-cell pending">待评级</span>'
+              : '<span class="score-cell">' + score.toFixed(0) + "</span>";
+
+          return (
+            '<tr class="' +
+            (score === null ? "pending-row" : "") +
+            '" data-seq="' +
+            escapeHtml(record["序号"]) +
+            '">' +
+            '<td><span class="area-name">' +
+            escapeHtml(record["责任区"]) +
+            "</span></td>" +
+            "<td>" +
+            escapeHtml(record["责任部门"]) +
+            "</td>" +
+            "<td>" +
+            escapeHtml(record["负责人"]) +
+            "</td>" +
+            "<td>" +
+            escapeHtml(record["6S对接人"]) +
+            "</td>" +
+            "<td>" +
+            scoreCell +
+            "</td>" +
+            '<td><span class="badge ' +
+            getRatingClass(rating) +
+            '">' +
+            (rating === "待评级" ? "待评级" : rating + "级") +
+            "</span></td>" +
+            '<td><span class="badge ' +
+            status.className +
+            '">' +
+            escapeHtml(status.label) +
+            "</span></td>" +
+            "</tr>"
+          );
+        })
+        .join("");
+    }
+
+    function renderSourceStatus(data) {
+      const metrics = getMetrics(data);
+      const dateText = state.lastRefreshAt
+        ? state.lastRefreshAt.toLocaleTimeString("zh-CN", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          })
+        : "--:--:--";
+      document.getElementById("sourceStatus").innerHTML =
+        '<div class="source-grid">' +
+        '<div><span>数据来源</span><strong>' +
+        (state.sourceMode === "mock" ? "内置Mock / Excel" : "外部接口") +
+        "</strong></div>" +
+        '<div><span>数据记录</span><strong>' +
+        data.length +
+        " 条</strong></div>" +
+        '<div><span>完成进度</span><strong>' +
+        Math.round(metrics.ratedCount / TOTAL_RESPONSIBILITY_AREAS * 100) +
+        "%</strong></div>" +
+        '<div><span>最近刷新</span><strong>' +
+        escapeHtml(dateText) +
+        "</strong></div>" +
+        '<div class="source-progress"><i style="width:' +
+        metrics.ratedCount / TOTAL_RESPONSIBILITY_AREAS * 100 +
+        '%"></i></div>' +
+        '<p>' +
+        (metrics.ratedCount
+          ? "当前已评级 " +
+            metrics.ratedCount +
+            " 个，待评级 " +
+            metrics.pendingCount +
+            " 个；安全项问题需同步执行乐捐。"
+          : "当前13个责任区均未录入总分，平均分显示为“-”，评级统一为待评级。") +
+        "</p>" +
+        "</div>";
+    }
+
+    function renderTicker(data) {
+      const track = document.getElementById("tickerTrack");
+      const metrics = getMetrics(data);
+      const messages = data
+        .filter(function (record) {
+          return getScore(record) !== null;
+        })
+        .sort(function (a, b) {
+          return String(b["巡检日期"]).localeCompare(String(a["巡检日期"]));
+        })
+        .slice(0, 6)
+        .map(function (record) {
+          const safetyText = hasSafetyIssue(record) ? " · 安全项问题需乐捐" : "";
+          return {
+            text:
+              (record["巡检日期"] || "日期待补充") +
+              " " +
+              record["责任区"] +
+              " · " +
+              getScore(record).toFixed(0) +
+              "分 · " +
+              getRating(record) +
+              "级" +
+              safetyText,
+            warning: hasSafetyIssue(record)
+          };
+        });
+
+      if (!messages.length) {
+        messages.push({
+          text:
+            "当前周期已完成 " +
+            metrics.ratedCount +
+            " 个责任区评分，另有 " +
+            metrics.pendingCount +
+            " 个责任区等待评级",
+          warning: false
+        });
+        messages.push({
+          text: "内置数据来源：6S巡检打分表，点击责任区可录入或更新总分",
+          warning: false
+        });
+      }
+
+      messages.push({
+        text: "特别提醒：出现任何安全项问题，除扣除相应分数外，还需进行“乐捐”处理",
+        warning: true
+      });
+
+      const content = messages
+        .map(function (message) {
+          return (
+            '<span class="ticker-item' +
+            (message.warning ? " warning" : "") +
+            '">' +
+            escapeHtml(message.text) +
+            "</span>"
+          );
+        })
+        .join("");
+
+      track.innerHTML =
+        '<div class="ticker-group">' +
+        content +
+        '</div><div class="ticker-group" aria-hidden="true">' +
+        content +
+        "</div>";
+    }
+
+    function populateDepartmentFilter() {
+      const select = document.getElementById("departmentFilter");
+      select.innerHTML =
+        '<option value="ALL">全部部门</option>' +
+        DEPARTMENT_ORDER.map(function (department) {
+          return (
+            '<option value="' +
+            escapeHtml(department) +
+            '">' +
+            escapeHtml(department) +
+            "</option>"
+          );
+        }).join("");
+    }
+
+    function renderDashboard() {
+      const filteredData = filterByPeriod(state.data);
+      updateKpis(filteredData);
+      renderRatingPie(filteredData);
+      renderDepartmentChart(filteredData);
+      renderAreaScoreChart(filteredData);
+      renderTable(filteredData);
+      renderSourceStatus(filteredData);
+      renderTicker(filteredData);
+    }
+
+    function buildDetailStat(label, value) {
+      return (
+        '<div class="detail-stat"><span>' +
+        escapeHtml(label) +
+        "</span><strong>" +
+        escapeHtml(value) +
+        "</strong></div>"
+      );
+    }
+
+    function openDetailModal(record) {
+      if (!record) {
+        return;
+      }
+
+      const score = getScore(record);
+      const rating = getRating(record);
+      const status = getRecordStatus(record);
+      const deductions = getDeductionItems(record);
+      const modal = document.getElementById("detailModal");
+      state.selectedSequence = record["序号"];
+
+      document.getElementById("modalTitle").textContent = record["责任区"] + " · 巡检明细";
+      document.getElementById("modalSubtitle").textContent =
+        record["责任部门"] +
+        " / 负责人：" +
+        record["负责人"] +
+        " / 6S对接人：" +
+        record["6S对接人"] +
+        " / 巡检日期：" +
+        (record["巡检日期"] || "待补充");
+
+      let deductionHtml =
+        '<div class="empty-cell" style="height:auto;padding:18px 0">当前尚无扣分明细</div>';
+      if (deductions.length) {
+        deductionHtml =
+          '<div class="deduction-list">' +
+          deductions
+            .map(function (item) {
+              const safetyClass = item.dimension.indexOf("安全") !== -1 ? " safety" : "";
+              const amountText = item.amount ? "-" + item.amount + "分" : "未填分值";
+              return (
+                '<div class="deduction-item' +
+                safetyClass +
+                '"><span class="dimension">' +
+                escapeHtml(item.dimension) +
+                '</span><span class="amount">' +
+                escapeHtml(amountText) +
+                '</span><span class="reason">' +
+                escapeHtml(item.reason) +
+                "</span></div>"
+              );
+            })
+            .join("") +
+          "</div>";
+      }
+
+      const photo = record["现场照片"];
+      const photoHtml =
+        photo && /^(data:image\/|https?:\/\/|\.?\/)/i.test(String(photo))
+          ? '<img src="' +
+            escapeHtml(photo) +
+            '" alt="' +
+            escapeHtml(record["责任区"]) +
+            '现场照片">'
+          : '<div class="photo-placeholder">暂无现场照片</div>';
+
+      document.getElementById("modalBody").innerHTML =
+        '<div class="detail-stats">' +
+        buildDetailStat("总分（满分100分）", score === null ? "待评级" : score.toFixed(0) + " 分") +
+        buildDetailStat("评级", rating === "待评级" ? "待评级" : rating + "级") +
+        buildDetailStat("状态", status.label) +
+        buildDetailStat("安全项乐捐", hasSafetyIssue(record) ? "需乐捐" : "无") +
+        "</div>" +
+        '<section class="score-entry">' +
+        '<div><label for="scoreInput">总分录入（0-100）</label>' +
+        '<input id="scoreInput" class="field" type="number" min="0" max="100" step="1" value="' +
+        (score === null ? "" : score) +
+        '" placeholder="请输入总分"></div>' +
+        '<button id="saveScoreButton" class="entry-button" type="button">保存并联动更新</button>' +
+        "</section>" +
+        '<div id="entryMessage" class="entry-message"></div>' +
+        '<section class="detail-section"><h3>扣分项与原因</h3>' +
+        deductionHtml +
+        "</section>" +
+        '<section class="detail-section"><h3>现场照片</h3>' +
+        '<div class="photo-box">' +
+        photoHtml +
+        '<div class="photo-copy"><strong>扣分原因汇总</strong>' +
+        escapeHtml(record["扣分原因"] || "暂无") +
+        "</div></div></section>";
+
+      document.getElementById("saveScoreButton").addEventListener("click", saveSelectedScore);
+      document.getElementById("scoreInput").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          saveSelectedScore();
+        }
+      });
+
+      modal.classList.add("active");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      window.setTimeout(function () {
+        document.getElementById("scoreInput").focus();
+      }, 30);
+    }
+
+    function saveSelectedScore() {
+      const input = document.getElementById("scoreInput");
+      const message = document.getElementById("entryMessage");
+      const rawValue = input.value.trim();
+      const score = Number(rawValue);
+
+      if (rawValue === "" || Number.isNaN(score) || score < 0 || score > 100) {
+        message.textContent = "请输入0-100之间的总分。";
+        return;
+      }
+
+      const sourceRecord = state.sourceData.find(function (record) {
+        return String(record["序号"]) === String(state.selectedSequence);
+      });
+      if (!sourceRecord) {
+        message.textContent = "未找到对应责任区记录。";
+        return;
+      }
+
+      setScoreField(sourceRecord, Number(score.toFixed(1)));
+      sourceRecord.评级 = resolveRating(score);
+      if (!sourceRecord["巡检日期"]) {
+        sourceRecord["巡检日期"] = toInputDate(new Date());
+      }
+      state.data = normalizeData(state.sourceData);
+      renderDashboard();
+      closeDetailModal();
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById("detailModal");
+      modal.classList.remove("active");
+      modal.setAttribute("aria-hidden", "true");
+      state.selectedSequence = null;
+      document.body.style.overflow = "";
+    }
+
+    function refreshDashboardData() {
+      state.data = normalizeData(state.sourceData);
+      state.lastRefreshAt = new Date();
+      renderDashboard();
+    }
+
+    function bindEvents() {
+      document.getElementById("periodSelect").addEventListener("change", function (event) {
+        state.period = event.target.value;
+        document
+          .getElementById("customRange")
+          .classList.toggle("active", state.period === "custom");
+        renderDashboard();
+      });
+
+      document.getElementById("customStart").addEventListener("change", function (event) {
+        state.customStart = event.target.value;
+        if (state.period === "custom") {
+          renderDashboard();
+        }
+      });
+
+      document.getElementById("customEnd").addEventListener("change", function (event) {
+        state.customEnd = event.target.value;
+        if (state.period === "custom") {
+          renderDashboard();
+        }
+      });
+
+      document.getElementById("ratingFilter").addEventListener("change", function (event) {
+        state.ratingFilter = event.target.value;
+        renderTable(filterByPeriod(state.data));
+      });
+
+      document.getElementById("departmentFilter").addEventListener("change", function (event) {
+        state.departmentFilter = event.target.value;
+        renderTable(filterByPeriod(state.data));
+      });
+
+      document.getElementById("detailTableBody").addEventListener("click", function (event) {
+        const row = event.target.closest("tr[data-seq]");
+        if (!row) {
+          return;
+        }
+        const record = filterByPeriod(state.data).find(function (item) {
+          return String(item["序号"]) === row.dataset.seq;
+        });
+        openDetailModal(record);
+      });
+
+      document.getElementById("modalClose").addEventListener("click", closeDetailModal);
+      document.getElementById("detailModal").addEventListener("click", function (event) {
+        if (event.target.id === "detailModal") {
+          closeDetailModal();
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeDetailModal();
+        }
+      });
+
+      let resizeTimer = null;
+      window.addEventListener("resize", function () {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(function () {
+          resizeCharts();
+          resizeOrbCanvas();
+        }, 120);
+      });
+    }
+
+    function makeSeededRandom(seed) {
+      let value = seed >>> 0;
+      return function () {
+        value += 0x6d2b79f5;
+        let result = value;
+        result = Math.imul(result ^ (result >>> 15), result | 1);
+        result ^= result + Math.imul(result ^ (result >>> 7), result | 61);
+        return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const orbPoints = [];
+    const random = makeSeededRandom(20261013);
+    for (let pointIndex = 0; pointIndex < 118; pointIndex += 1) {
+      orbPoints.push({
+        lon: random() * Math.PI * 2,
+        lat: (random() - 0.5) * Math.PI * 0.92,
+        size: 0.7 + random() * 1.5,
+        phase: random() * Math.PI * 2
+      });
+    }
+
+    function resizeOrbCanvas() {
+      const canvas = document.getElementById("orbCanvas");
+      if (!canvas) {
+        return null;
+      }
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      const context = canvas.getContext("2d");
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return {
+        canvas: canvas,
+        context: context,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    function drawOrbFrame(timestamp) {
+      const orb = resizeOrbCanvas();
+      if (!orb) {
+        return;
+      }
+      const context = orb.context;
+      const width = orb.width;
+      const height = orb.height;
+      const centerX = width * 0.5;
+      const centerY = height * 0.53;
+      const radius = Math.min(width, height) * 0.285;
+      const rotation = timestamp * 0.000055;
+
+      context.clearRect(0, 0, width, height);
+
+      const floorGradient = context.createRadialGradient(
+        centerX,
+        centerY + radius * 0.7,
+        0,
+        centerX,
+        centerY + radius * 0.7,
+        radius * 1.15
+      );
+      floorGradient.addColorStop(0, "rgba(53,214,255,.13)");
+      floorGradient.addColorStop(0.45, "rgba(47,125,255,.06)");
+      floorGradient.addColorStop(1, "rgba(47,125,255,0)");
+      context.save();
+      context.scale(1, 0.28);
+      context.beginPath();
+      context.arc(centerX, (centerY + radius * 0.88) / 0.28, radius * 1.35, 0, Math.PI * 2);
+      context.fillStyle = floorGradient;
+      context.fill();
+      context.restore();
+
+      for (let ringIndex = 0; ringIndex < 4; ringIndex += 1) {
+        context.beginPath();
+        context.ellipse(
+          centerX,
+          centerY + radius * (0.82 + ringIndex * 0.12),
+          radius * (1.02 + ringIndex * 0.09),
+          radius * (0.12 + ringIndex * 0.018),
+          0,
+          0,
+          Math.PI * 2
+        );
+        context.strokeStyle = "rgba(53,214,255," + (0.12 - ringIndex * 0.02) + ")";
+        context.lineWidth = 0.8;
+        context.stroke();
+      }
+
+      const sphereGradient = context.createRadialGradient(
+        centerX - radius * 0.32,
+        centerY - radius * 0.4,
+        radius * 0.08,
+        centerX,
+        centerY,
+        radius * 1.08
+      );
+      sphereGradient.addColorStop(0, "rgba(61,135,255,.28)");
+      sphereGradient.addColorStop(0.48, "rgba(18,54,147,.24)");
+      sphereGradient.addColorStop(1, "rgba(3,9,35,.76)");
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      context.fillStyle = sphereGradient;
+      context.fill();
+      context.strokeStyle = "rgba(53,214,255,.42)";
+      context.lineWidth = 1;
+      context.stroke();
+
+      context.save();
+      context.beginPath();
+      context.arc(centerX, centerY, radius - 1, 0, Math.PI * 2);
+      context.clip();
+
+      for (let latitudeIndex = -4; latitudeIndex <= 4; latitudeIndex += 1) {
+        const latitude = latitudeIndex / 4 * Math.PI * 0.5;
+        const y = centerY - Math.sin(latitude) * radius;
+        const ellipseRadius = Math.cos(latitude) * radius;
+        context.beginPath();
+        context.ellipse(centerX, y, ellipseRadius, Math.max(3, ellipseRadius * 0.12), 0, 0, Math.PI * 2);
+        context.strokeStyle = "rgba(75,145,255,.13)";
+        context.lineWidth = 0.65;
+        context.stroke();
+      }
+
+      for (let longitudeIndex = -4; longitudeIndex <= 4; longitudeIndex += 1) {
+        const longitude = longitudeIndex / 4 * Math.PI * 0.5 + rotation;
+        context.beginPath();
+        context.ellipse(
+          centerX,
+          centerY,
+          Math.max(4, Math.abs(Math.sin(longitude)) * radius),
+          radius,
+          0,
+          0,
+          Math.PI * 2
+        );
+        context.strokeStyle =
+          longitudeIndex === 0 ? "rgba(53,214,255,.26)" : "rgba(75,145,255,.14)";
+        context.lineWidth = longitudeIndex === 0 ? 0.9 : 0.65;
+        context.stroke();
+      }
+
+      orbPoints.forEach(function (point) {
+        const longitude = point.lon + rotation;
+        const depth = Math.cos(point.lat) * Math.cos(longitude);
+        if (depth <= -0.05) {
+          return;
+        }
+        const x = centerX + radius * Math.cos(point.lat) * Math.sin(longitude);
+        const y = centerY - radius * Math.sin(point.lat);
+        const pulse = 0.55 + 0.45 * Math.sin(timestamp * 0.0012 + point.phase);
+        const alpha = Math.max(0.08, depth * 0.72 * pulse);
+        context.beginPath();
+        context.arc(x, y, point.size * (0.7 + depth * 0.45), 0, Math.PI * 2);
+        context.fillStyle =
+          point.size > 1.9
+            ? "rgba(53,214,255," + alpha + ")"
+            : "rgba(135,154,255," + alpha + ")";
+        context.fill();
+      });
+
+      const sweepX = centerX + Math.sin(rotation * 2.2) * radius * 0.72;
+      const sweepGradient = context.createLinearGradient(
+        sweepX - radius * 0.28,
+        centerY - radius,
+        sweepX + radius * 0.28,
+        centerY + radius
+      );
+      sweepGradient.addColorStop(0, "rgba(53,214,255,0)");
+      sweepGradient.addColorStop(0.5, "rgba(53,214,255,.1)");
+      sweepGradient.addColorStop(1, "rgba(53,214,255,0)");
+      context.fillStyle = sweepGradient;
+      context.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+      context.restore();
+
+      context.beginPath();
+      context.arc(centerX, centerY, radius * 1.08, -0.35, 0.65);
+      context.strokeStyle = "rgba(53,214,255,.32)";
+      context.lineWidth = 1.4;
+      context.stroke();
+
+      context.beginPath();
+      context.arc(centerX, centerY, radius * 1.17, 2.62, 3.6);
+      context.strokeStyle = "rgba(115,87,255,.38)";
+      context.lineWidth = 1.2;
+      context.stroke();
+
+      orbAnimationFrame = window.requestAnimationFrame(drawOrbFrame);
+    }
+
+    function startOrbAnimation() {
+      if (orbAnimationFrame) {
+        window.cancelAnimationFrame(orbAnimationFrame);
+      }
+      orbAnimationFrame = window.requestAnimationFrame(drawOrbFrame);
+    }
+
+    // 【长期对接接口】后端或Excel导入后统一调用：window.setDashboardData(records)
+    // records 字段必须与 MOCK_6S_DATA 保持一致；评级字段可省略，将自动计算。
+    window.setDashboardData = function (records) {
+      if (!Array.isArray(records)) {
+        throw new TypeError("setDashboardData(records) 需要传入数组");
+      }
+      state.sourceMode = "external";
+      state.sourceData = cloneData(records);
+      state.data = normalizeData(state.sourceData);
+      state.lastRefreshAt = new Date();
+      renderDashboard();
+    };
+
+    function initialize() {
+      const now = new Date();
+      state.customStart = toInputDate(new Date(now.getFullYear(), now.getMonth(), 1));
+      state.customEnd = toInputDate(now);
+      document.getElementById("customStart").value = state.customStart;
+      document.getElementById("customEnd").value = state.customEnd;
+
+      state.sourceData = cloneData(MOCK_6S_DATA);
+      state.data = normalizeData(state.sourceData);
+      state.lastRefreshAt = new Date();
+
+      populateDepartmentFilter();
+      bindEvents();
+      updateClock();
+      initCharts();
+      renderDashboard();
+      startOrbAnimation();
+
+      state.clockTimer = window.setInterval(updateClock, 1000);
+      state.refreshTimer = window.setInterval(function () {
+        refreshDashboardData();
+      }, 30000);
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
